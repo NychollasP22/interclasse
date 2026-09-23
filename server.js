@@ -1,258 +1,246 @@
 const prompt = require('prompt-sync')();
 
-class Pessoa {
-    #id;
-    #nome;
-
-    constructor(id, nome) {
-        this.#id = id;
-        this.nome = nome;
-    }
-
-    get id() {
-        return this.#id;
-    }
-
-    set nome(novoNome) {
-        if (!novoNome || novoNome.length < 3) {
-            console.log("Nome inválido.");
-            return;
-        }
-
-        this.#nome = novoNome;
-    }
-
-    get nome() {
-        return this.#nome;
-    }
-
-    exibir() {
-        console.log(`ID: ${this.#id} | Nome: ${this.#nome}`);
-    }
-}
-
-class Turma {
-    #nome;
-
-    constructor(id, nome) {
-        this.id = id;
-        this.#nome = nome.toUpperCase();
-    }
-
-    set nome(novoNome) {
-        if (!novoNome || novoNome.length < 3) {
-            console.log("Nome inválido.");
-            return;
-        }
-
-        this.#nome = novoNome.toUpperCase();
-    }
-
-    get nome() {
-        return this.#nome;
-    }
-
-    exibir() {
-        console.log(`ID: ${this.id} | Sala: ${this.#nome}`);
-    }
-}
-
-class Atleta extends Pessoa {
-    #idTurma;
-
-    constructor(id, nome, idTurma) {
-        super(id, nome);
-        this.idTurma = idTurma;
-    }
-
-    set idTurma(novoId) {
-        if (!novoId || novoId <= 0) {
-            console.log("Turma inválida.");
-            return;
-        }
-
-        this.#idTurma = novoId;
-    }
-
-    get idTurma() {
-        return this.#idTurma;
-    }
-
-    exibir(nomeTurma) {
-        console.log(
-            `ID: ${this.id} | Atleta: ${this.nome} | Turma: ${nomeTurma}`
-        );
-    }
-}
-
-class Arbitro extends Pessoa {
-    #numeroCredencial;
-    #anosExperiencia;
-
-    constructor(id, nome, numeroCredencial, anosExperiencia) {
-        super(id, nome);
-        this.numeroCredencial = numeroCredencial;
-        this.anosExperiencia = anosExperiencia;
-    }
-
-    set numeroCredencial(numero) {
-        if (!numero || numero <= 0) {
-            console.log("Número de credencial inválido.");
-            return;
-        }
-
-        this.#numeroCredencial = numero;
-    }
-
-    get numeroCredencial() {
-        return this.#numeroCredencial;
-    }
-
-    set anosExperiencia(anos) {
-        if (anos < 0) {
-            console.log("Anos de experiência inválidos.");
-            return;
-        }
-
-        this.#anosExperiencia = anos;
-    }
-
-    get anosExperiencia() {
-        return this.#anosExperiencia;
-    }
-
-    exibir() {
-        console.log(
-            `ID: ${this.id} | Árbitro: ${this.nome} | Credencial: ${this.#numeroCredencial} | Experiência: ${this.#anosExperiencia} anos`
-        );
-    }
-}
+const Equipe = require('./src/models/Equipe');
+const Modalidade = require('./src/models/Modalidade');
+const { Pessoa, Arbitro, Atleta } = require('./src/models/Pessoa');
+const Turma = require('./src/models/Turma');
+const CadastroFactory = require('./src/models/CadastroFactory');
 
 class ArenaConnect {
+
+    static #instancia = null;
+
     constructor() {
+
+        if (ArenaConnect.#instancia) {
+
+            throw new Error(
+                "Erro: Use ArenaConnect.getInstancia() para obter a instância do sistema!"
+            );
+
+        }
+
         this.turmas = [];
         this.atletas = [];
         this.arbitros = [];
-        this.idTurmaContador = 1;
-        this.idAtletaContador = 1;
-        this.idArbitroContador = 1;
+        this.equipes = [];
+
+        this.idTurma = 1;
+        this.idAtleta = 1;
+        this.idArbitro = 1;
+        this.idEquipe = 1;
+
+        ArenaConnect.#instancia = this;
+    }
+
+    static getInstancia() {
+
+        if (!ArenaConnect.#instancia) {
+            ArenaConnect.#instancia = new ArenaConnect();
+        }
+
+        return ArenaConnect.#instancia;
+    }
+
+    buscarTurmaOuFalhar(idTurma) {
+
+        const turmaEncontrada = this.turmas.find(
+            turma => turma.id === idTurma
+        );
+
+        if (!turmaEncontrada) {
+
+            throw new Error(
+                `Turma com ID ${idTurma} não existe.`
+            );
+
+        }
+
+        return turmaEncontrada;
+    }
+
+    buscarEquipeOuFalhar(idEquipe) {
+
+        const equipeEncontrada = this.equipes.find(
+            equipe => equipe.id === idEquipe
+        );
+
+        if (!equipeEncontrada) {
+
+            throw new Error(
+                `Equipe com ID ${idEquipe} não encontrada.`
+            );
+
+        }
+
+        return equipeEncontrada;
+    }
+
+    buscarAtletaOuFalhar(idAtleta) {
+
+        const atletaEncontrado = this.atletas.find(
+            atleta => atleta.id === idAtleta
+        );
+
+        if (!atletaEncontrado) {
+
+            throw new Error(
+                `Atleta com ID ${idAtleta} não encontrado.`
+            );
+
+        }
+
+        return atletaEncontrado;
+    }
+
+    equipeJaExiste(idTurma, modalidade) {
+
+        return this.equipes.some(
+            equipe =>
+                equipe.idTurma === idTurma &&
+                equipe.modalidade === modalidade
+        );
     }
 
     adicionarTurma() {
-        const nome = prompt("Nome da nova turma: ");
 
-        const turma = new Turma(
-            this.idTurmaContador++,
-            nome
+        const nomeTurma = prompt("Nome da turma: ");
+
+        if (!nomeTurma) {
+            return;
+        }
+
+        const novaTurma = new Turma(
+            this.idTurma++,
+            nomeTurma
         );
 
-        this.turmas.push(turma);
-        console.log("Turma registrada com sucesso.");
+        this.turmas.push(novaTurma);
+
+        console.log("Turma registrada!");
     }
 
     listarTurmas() {
-        console.log("\n=== LISTA DE TURMAS ===");
 
-        if (this.turmas.length === 0) {
+        console.log("\n=== TURMAS ===");
+
+        if (!this.turmas.length) {
+
             console.log("Nenhuma turma cadastrada.");
             return;
+
         }
 
-        this.turmas.forEach(turma => turma.exibir());
-    }
-
-    editarTurma() {
-        this.listarTurmas();
-
-        const id = parseInt(prompt("ID da turma para editar: "));
-        const turma = this.turmas.find(t => t.id === id);
-
-        if (!turma) {
-            console.log("ID não encontrado.");
-            return;
-        }
-
-        const novoNome = prompt("Novo nome da turma: ");
-        turma.nome = novoNome;
-
-        console.log("Dados atualizados.");
-    }
-
-    removerTurma() {
-        this.listarTurmas();
-
-        const id = parseInt(prompt("ID da turma para remover: "));
-        const quantidade = this.turmas.length;
-
-        this.turmas = this.turmas.filter(
-            turma => turma.id !== id
+        this.turmas.forEach(
+            turma => turma.exibir()
         );
-
-        if (this.turmas.length < quantidade) {
-            console.log("Turma removida.");
-        } else {
-            console.log("ID não encontrado.");
-        }
     }
 
     adicionarAtleta() {
+
         this.listarTurmas();
 
-        const idTurma = parseInt(
-            prompt("ID da turma do atleta: ")
-        );
+        try {
 
-        const turma = this.turmas.find(
-            t => t.id === idTurma
-        );
+            const idTurma = parseInt(
+                prompt("ID da turma: ")
+            );
 
-        if (!turma) {
-            console.log("Turma inválida.");
+            this.buscarTurmaOuFalhar(idTurma);
+
+            const nomeAtleta = prompt(
+                "Nome do atleta: "
+            );
+
+            if (!nomeAtleta) {
+                return;
+            }
+
+            const novoAtleta =
+                CadastroFactory.criarAtleta(
+                    this.idAtleta++,
+                    nomeAtleta,
+                    idTurma
+                );
+
+            this.atletas.push(novoAtleta);
+
+            console.log("Atleta registrado!");
+
+        } catch (erro) {
+
+            console.log(
+                `Erro no cadastro: ${erro.message}`
+            );
+
+        }
+    }
+
+    listarAtletas() {
+
+        console.log("\n=== ATLETAS ===");
+
+        if (!this.atletas.length) {
+
+            console.log("Nenhum atleta cadastrado.");
             return;
+
         }
 
-        const nome = prompt("Nome do atleta: ");
+        this.atletas.forEach(atleta => {
 
-        const atleta = new Atleta(
-            this.idAtletaContador++,
-            nome,
-            idTurma
-        );
+            const turmaAtleta = this.turmas.find(
+                turma => turma.id === atleta.idTurma
+            );
 
-        this.atletas.push(atleta);
+            atleta.exibir(
+                turmaAtleta
+                    ? turmaAtleta.nome
+                    : "NÃO ENCONTRADA"
+            );
 
-        console.log(
-            `Atleta "${nome}" vinculado à turma ${turma.nome}.`
-        );
+        });
     }
 
     adicionarArbitro() {
-        const nome = prompt("Nome do árbitro: ");
-        const numeroCredencial = parseInt(
-            prompt("Número da credencial: ")
+
+        const nomeArbitro = prompt(
+            "Nome do árbitro: "
         );
+
+        if (!nomeArbitro) {
+            return;
+        }
+
+        const credencial = parseInt(
+            prompt("Credencial: ")
+        );
+
         const anosExperiencia = parseInt(
             prompt("Anos de experiência: ")
         );
 
-        const arbitro = new Arbitro(
-            this.idArbitroContador++,
-            nome,
-            numeroCredencial,
+        const novoArbitro = new Arbitro(
+            this.idArbitro++,
+            nomeArbitro,
+            credencial,
             anosExperiencia
         );
 
-        this.arbitros.push(arbitro);
+        this.arbitros.push(novoArbitro);
 
-        console.log("Árbitro registrado com sucesso.");
+        console.log("Árbitro registrado!");
     }
 
     listarArbitros() {
-        console.log("\n=== LISTA DE ÁRBITROS ===");
 
-        if (this.arbitros.length === 0) {
+        console.log("\n=== ÁRBITROS ===");
+
+        if (!this.arbitros.length) {
+
             console.log("Nenhum árbitro cadastrado.");
             return;
+
         }
 
         this.arbitros.forEach(
@@ -260,78 +248,388 @@ class ArenaConnect {
         );
     }
 
-    testarPolimorfismo() {
-        console.log("\n=== TESTE DE POLIMORFISMO ===");
+    adicionarEquipe() {
 
-        const pessoas = [
-            ...this.atletas,
-            ...this.arbitros
-        ];
+        this.listarTurmas();
 
-        if (pessoas.length === 0) {
-            console.log("Nenhuma pessoa cadastrada.");
+        try {
+
+            const idTurma = parseInt(
+                prompt("ID da turma: ")
+            );
+
+            this.buscarTurmaOuFalhar(idTurma);
+
+            console.log("\nModalidades:");
+
+            Object.values(Modalidade).forEach(
+                modalidade =>
+                    console.log(`- ${modalidade}`)
+            );
+
+            const modalidadeEscolhida = prompt(
+                "Modalidade: "
+            );
+
+            if (
+                !Object.values(Modalidade)
+                    .includes(modalidadeEscolhida)
+            ) {
+
+                console.log("Modalidade inválida!");
+                return;
+
+            }
+
+            if (
+                this.equipeJaExiste(
+                    idTurma,
+                    modalidadeEscolhida
+                )
+            ) {
+
+                console.log(
+                    "Essa equipe já existe!"
+                );
+
+                return;
+            }
+
+            const novaEquipe =
+                CadastroFactory.criarEquipe(
+                    this.idEquipe++,
+                    idTurma,
+                    modalidadeEscolhida
+                );
+
+            this.equipes.push(novaEquipe);
+
+            console.log("Equipe registrada!");
+
+        } catch (erro) {
+
+            console.log(
+                `Erro ao registrar equipe: ${erro.message}`
+            );
+
+        }
+    }
+
+    listarEquipes() {
+
+        console.log("\n=== EQUIPES ===");
+
+        if (!this.equipes.length) {
+
+            console.log("Nenhuma equipe cadastrada.");
             return;
+
         }
 
-        pessoas.forEach(pessoa => {
-            if (pessoa instanceof Atleta) {
-                const turma = this.turmas.find(
-                    t => t.id === pessoa.idTurma
+        this.equipes.forEach(equipe => {
+
+            const turmaDaEquipe = this.turmas.find(
+                turma => turma.id === equipe.idTurma
+            );
+
+            equipe.exibir(
+                turmaDaEquipe
+                    ? turmaDaEquipe.nome
+                    : "NÃO ENCONTRADA"
+            );
+
+        });
+    }
+
+    vincularAtletaEquipe() {
+
+        try {
+
+            this.listarEquipes();
+
+            const idEquipe = parseInt(
+                prompt("ID da equipe: ")
+            );
+
+            const equipe =
+                this.buscarEquipeOuFalhar(
+                    idEquipe
                 );
 
-                pessoa.exibir(
-                    turma ? turma.nome : "Turma não encontrada"
+            this.listarAtletas();
+
+            const idAtleta = parseInt(
+                prompt("ID do atleta: ")
+            );
+
+            const atleta =
+                this.buscarAtletaOuFalhar(
+                    idAtleta
                 );
-            } else {
-                pessoa.exibir();
+
+            if (
+                atleta.idTurma !== equipe.idTurma
+            ) {
+
+                throw new Error(
+                    "Atleta pertence a outra turma!"
+                );
+
             }
-        });
+
+            if (
+                equipe.atletas.includes(
+                    atleta.id
+                )
+            ) {
+
+                throw new Error(
+                    "Atleta já está na equipe!"
+                );
+
+            }
+
+            equipe.atletas.push(
+                atleta.id
+            );
+
+            console.log(
+                "Atleta vinculado!"
+            );
+
+        } catch (erro) {
+
+            console.log(
+                `Erro ao vincular atleta: ${erro.message}`
+            );
+
+        }
+    }
+
+    desvincularAtletaEquipe() {
+
+        this.listarEquipes();
+
+        try {
+
+            const idEquipe = parseInt(
+                prompt("ID da equipe: ")
+            );
+
+            const equipe =
+                this.buscarEquipeOuFalhar(
+                    idEquipe
+                );
+
+            if (!equipe.atletas.length) {
+
+                console.log(
+                    "Nenhum atleta na equipe."
+                );
+
+                return;
+            }
+
+            console.log(
+                "\nAtletas da equipe:"
+            );
+
+            equipe.atletas.forEach(
+                idAtleta => {
+
+                    const atletaEncontrado =
+                        this.atletas.find(
+                            atleta =>
+                                atleta.id === idAtleta
+                        );
+
+                    if (atletaEncontrado) {
+
+                        console.log(
+                            `ID: ${atletaEncontrado.id} | ${atletaEncontrado.nome}`
+                        );
+
+                    }
+                }
+            );
+
+            const idAtletaParaRemover =
+                parseInt(
+                    prompt("ID do atleta: ")
+                );
+
+            const indiceAtleta =
+                equipe.atletas.indexOf(
+                    idAtletaParaRemover
+                );
+
+            if (indiceAtleta === -1) {
+
+                console.log(
+                    "Atleta não está na equipe!"
+                );
+
+                return;
+            }
+
+            equipe.atletas.splice(
+                indiceAtleta,
+                1
+            );
+
+            console.log(
+                "Atleta desvinculado!"
+            );
+
+        } catch (erro) {
+
+            console.log(
+                `Erro ao desvincular atleta: ${erro.message}`
+            );
+
+        }
+    }
+
+    removerEquipe() {
+
+        this.listarEquipes();
+
+        try {
+
+            const idEquipe = parseInt(
+                prompt("ID da equipe: ")
+            );
+
+            const equipe =
+                this.buscarEquipeOuFalhar(
+                    idEquipe
+                );
+
+            const indiceEquipe =
+                this.equipes.findIndex(
+                    equipeEncontrada =>
+                        equipeEncontrada.id === equipe.id
+                );
+
+            this.equipes.splice(
+                indiceEquipe,
+                1
+            );
+
+            console.log(
+                "Equipe removida!"
+            );
+
+        } catch (erro) {
+
+            console.log(
+                `Erro ao remover equipe: ${erro.message}`
+            );
+
+        }
     }
 }
 
 function main() {
-    const sistema = new ArenaConnect();
+
+    const sistema =
+        ArenaConnect.getInstancia();
 
     while (true) {
+
         console.log(`
- ==============================
- ARENA-CONNECT v2.0 - PBE1
- ==============================
- 1. Registrar Turma
- 2. Listar Turmas
- 3. Editar Turma
- 4. Remover Turma
- 5. Registrar Atleta
- 6. Registrar Árbitro
- 7. Listar Árbitros
- 8. Testar Polimorfismo
- 0. Sair
- ==============================`);
+==============================
+        ARENA-CONNECT
+==============================
+
+1. Registrar Turma
+2. Listar Turmas
+3. Registrar Atleta
+4. Listar Atletas
+5. Registrar Árbitro
+6. Listar Árbitros
+7. Registrar Equipe
+8. Listar Equipes
+9. Vincular Atleta à Equipe
+10. Desvincular Atleta da Equipe
+11. Remover Equipe
+12. Sair
+
+==============================
+`);
 
         const opcao = prompt("Escolha: ");
 
         if (opcao === "1") {
+
             sistema.adicionarTurma();
+
         } else if (opcao === "2") {
+
             sistema.listarTurmas();
+
         } else if (opcao === "3") {
-            sistema.editarTurma();
-        } else if (opcao === "4") {
-            sistema.removerTurma();
-        } else if (opcao === "5") {
+
             sistema.adicionarAtleta();
-        } else if (opcao === "6") {
+
+        } else if (opcao === "4") {
+
+            sistema.listarAtletas();
+
+        } else if (opcao === "5") {
+
             sistema.adicionarArbitro();
-        } else if (opcao === "7") {
+
+        } else if (opcao === "6") {
+
             sistema.listarArbitros();
+
+        } else if (opcao === "7") {
+
+            sistema.adicionarEquipe();
+
         } else if (opcao === "8") {
-            sistema.testarPolimorfismo();
+
+            sistema.listarEquipes();
+
+        } else if (opcao === "9") {
+
+            sistema.vincularAtletaEquipe();
+
+        } else if (opcao === "10") {
+
+            sistema.desvincularAtletaEquipe();
+
+        } else if (opcao === "11") {
+
+            sistema.removerEquipe();
+
         } else if (opcao === "0") {
+
             break;
+
         } else {
-            console.log("Opção inválida.");
+
+            console.log(
+                "Opção inválida!"
+            );
+
         }
     }
 }
 
-main();
+if (require.main === module) {
+
+    main();
+
+}
+
+module.exports = {
+    Modalidade,
+    Pessoa,
+    Atleta,
+    Arbitro,
+    Turma,
+    Equipe,
+    ArenaConnect
+};
