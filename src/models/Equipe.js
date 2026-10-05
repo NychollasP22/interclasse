@@ -1,5 +1,3 @@
-const Modalidade = require('./Modalidade')
-
 class Equipe {
     #id;
     #idTurma;
@@ -28,13 +26,36 @@ class Equipe {
         return this.#atletas;
     }
 
-    exibir(turma) {
+    adicionarAtleta(idAtleta) {
+        if (this.#atletas.includes(idAtleta)) {
+            return false;
+        }
+
+        this.#atletas.push(idAtleta);
+        return true;
+    }
+
+    removerAtleta(idAtleta) {
+        if (!this.#atletas.includes(idAtleta)) {
+            return false;
+        }
+
+        this.#atletas = this.#atletas.filter(
+            id => id !== idAtleta
+        );
+
+        return true;
+    }
+
+    exibir(turma, nomesAtletas) {
         console.log(
             `ID: ${this.id} | Turma: ${turma} | Modalidade: ${this.modalidade} | Atletas: ${this.atletas.length}`
+        );
+
+        nomesAtletas.forEach(
+            nome => console.log(` - ${nome}`)
         );
     }
 }
 
-
-module.exports = { 
-    Equipe }
+module.exports = Equipe;

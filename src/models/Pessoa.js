@@ -28,23 +28,6 @@ class Pessoa {
     }
 }
 
-class Atleta extends Pessoa {
-    #idTurma;
-
-    constructor(id, nome, idTurma) {
-        super(id, nome);
-        this.#idTurma = idTurma;
-    }
-
-    get idTurma() {
-        return this.#idTurma;
-    }
-
-    exibir(turma) {
-        console.log(`ID: ${this.id} | Atleta: ${this.nome} | Turma: ${turma}`);
-    }
-}
-
 class Arbitro extends Pessoa {
     #numeroCredencial;
     #anosExperiencia;
@@ -70,8 +53,25 @@ class Arbitro extends Pessoa {
     }
 }
 
-module.exports = {
-    Pessoa,
-    Atleta,
-    Arbitro
-};
+class Atleta extends Pessoa {
+    #idTurma;
+
+    constructor(id, nome, idTurma) {
+        super(id, nome);
+        this.#idTurma = idTurma;
+    }
+
+    get idTurma() {
+        return this.#idTurma;
+    }
+
+    exibir(turma) {
+        console.log(`ID: ${this.id} | Atleta: ${this.nome} | Turma: ${turma}`);
+    }
+}
+
+module.exports ={
+Pessoa,
+Arbitro,
+Atleta,
+}
