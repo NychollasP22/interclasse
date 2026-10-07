@@ -36,24 +36,19 @@ class Equipe {
     }
 
     removerAtleta(idAtleta) {
-        if (!this.#atletas.includes(idAtleta)) {
+        const indice = this.#atletas.indexOf(idAtleta);
+
+        if (indice === -1) {
             return false;
         }
 
-        this.#atletas = this.#atletas.filter(
-            id => id !== idAtleta
-        );
-
+        this.#atletas.splice(indice, 1);
         return true;
     }
 
-    exibir(turma, nomesAtletas) {
+    exibir(turma) {
         console.log(
             `ID: ${this.id} | Turma: ${turma} | Modalidade: ${this.modalidade} | Atletas: ${this.atletas.length}`
-        );
-
-        nomesAtletas.forEach(
-            nome => console.log(` - ${nome}`)
         );
     }
 }

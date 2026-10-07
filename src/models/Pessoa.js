@@ -74,4 +74,4 @@ module.exports ={
 Pessoa,
 Arbitro,
 Atleta,
-}
+} 

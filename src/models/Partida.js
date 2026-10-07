@@ -2,16 +2,16 @@ const Placar = require('./Placar');
 
 class Partida {
     #id;
-    #idA;
-    #idB;
+    #idEquipeA;
+    #idEquipeB;
     #modalidade;
     #placar;
 
-    constructor(id, idA, idB, modalidade, golsA, golsB) {
+    constructor(id, idEquipeA, idEquipeB, modalidade, golsA, golsB) {
         this.#id = id;
-        this.#idA = idA;
-        this.#idB = idB;
-        this.#modalidade = modalidade;
+        this.idEquipeA = idEquipeA;
+        this.idEquipeB = idEquipeB;
+        this.modalidade = modalidade;
         this.#placar = new Placar(golsA, golsB);
     }
 
@@ -19,12 +19,39 @@ class Partida {
         return this.#id;
     }
 
-    get idA() {
-        return this.#idA;
+    set idEquipeA(valor) {
+        if (!Number.isInteger(valor) || valor < 0) {
+            console.log('[ERRO] ID da equipe A inválido. Acesso negado');
+            return;
+        }
+
+        this.#idEquipeA = valor;
     }
 
-    get idB() {
-        return this.#idB;
+    get idEquipeA() {
+        return this.#idEquipeA;
+    }
+
+    set idEquipeB(valor) {
+        if (!Number.isInteger(valor) || valor < 0) {
+            console.log('[ERRO] ID da equipe B inválido. Acesso negado');
+            return;
+        }
+
+        this.#idEquipeB = valor;
+    }
+
+    get idEquipeB() {
+        return this.#idEquipeB;
+    }
+
+    set modalidade(valor) {
+        if (!valor) {
+            console.log('[ERRO] Modalidade da partida inválida. Acesso negado');
+            return;
+        }
+
+        this.#modalidade = valor;
     }
 
     get modalidade() {
@@ -33,6 +60,16 @@ class Partida {
 
     get placar() {
         return this.#placar;
+    }
+
+    vencedor() {
+        return this.#placar.vencedor();
+    }
+
+    exibir(nomeEquipeA, nomeEquipeB) {
+        console.log(
+            `ID: ${this.id} | ${nomeEquipeA} ${this.placar.golsA} x ${this.placar.golsB} ${nomeEquipeB} | ${this.modalidade}`
+        );
     }
 }
 
